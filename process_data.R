@@ -13,7 +13,7 @@ saveOutput <- function(centShp, lfile, source) {
   fout <- bzfile(oname, "wb")
   on.exit(close(fout))
   write.table(centShp, fout, sep=",", quote=TRUE,
-              row.names=FALSE, col.names=FALSE)
+              row.names=FALSE, col.names=TRUE)
 
   return(NULL)
 }
@@ -34,10 +34,11 @@ processFile <- function(lfile, source, dname) {
 
   # process shape file
   s <- read.shp(paste0(bname,".shp"))
-  try({centShp <- round(centr(s)[,1:2],6)}, silent=TRUE)
+  try({centShp <- round(centr(s)[,2:1],6)}, silent=TRUE)
   dbf <- read.dbf(paste0(bname,".dbf"), as.is=TRUE)
-  centShp$geoid <- dbf$GEOID
-  centShp <- centShp[,3:1]
+  colnames(dbf) <- tolower(colnames(dbf))
+  colnames(centShp) <- c("lat", "lon")
+  dbf <- cbind(dbf, centShp)
 
   return(centShp)
 }
@@ -61,10 +62,9 @@ processSource <- function(source) {
 processSource("TABBLOCK")  # block
 processSource("BG")        # block group
 processSource("TRACT")     # tract
-processSource("COUSUB")    # County Subdivision
-processSource("COUNTY")    # County
-processSource("STATE")     # State
-processSource("ZCTA5")     # Zip code tabulation areas, 5-digits
+processSource("COUNTY")    # county
+processSource("STATE")     # state
+processSource("ZCTA5")     # zip code "tabulation areas", 5-digits
 
 
 
