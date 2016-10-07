@@ -40,7 +40,7 @@ processFile <- function(lfile, source, dname) {
   colnames(centShp) <- c("lat", "lon")
   dbf <- cbind(dbf, centShp)
 
-  return(centShp)
+  return(dbf)
 }
 
 
@@ -66,6 +66,8 @@ processSource("COUNTY")    # county
 processSource("STATE")     # state
 processSource("ZCTA5")     # zip code "tabulation areas", 5-digits
 
+processSource("CSA")  # block
+processSource("CBSA")  # block
 
 
 
