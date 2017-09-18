@@ -6,9 +6,7 @@ library(fastshp)
 library(foreign)
 library(RCurl)
 
-saveOutput <- function(centShp, lfile, source) {
-  bname <- substr(lfile, 1, nchar(lfile) - 4)
-  oname <- sprintf("%s/%s.csv.bz2", source, bname)
+saveOutput <- function(centShp, lfile, oname) {
 
   fout <- bzfile(oname, "wb")
   on.exit(close(fout))
@@ -18,7 +16,6 @@ saveOutput <- function(centShp, lfile, source) {
   return(NULL)
 }
 
-
 processFile <- function(lfile, source, dname) {
   # save working directory
   wd <- getwd()
@@ -26,10 +23,16 @@ processFile <- function(lfile, source, dname) {
   on.exit(setwd(wd), add=TRUE)
   setwd(tempdir())
 
+  dname <- sprintf("https://www2.census.gov/geo/tiger/TIGER2015/%s/", source)
+
   # download and unzip file
+  f <- RCurl::CFILE(lfile, mode="wb")
+  ret <- RCurl::curlPerform(url = file.path(dname, lfile), writedata = f@ref, noprogress=FALSE)
+  RCurl::close(f)
+
   bname <- substr(lfile, 1, nchar(lfile) - 4)
-  cmd <- sprintf("curl -O %s --retry 14", paste0(dname,lfile))
-  system(cmd)
+  # cmd <- sprintf("curl -O %s --retry 14", paste0(dname, lfile))
+  # system(cmd)
   unzip(lfile)
 
   # process shape file
@@ -53,18 +56,22 @@ processSource <- function(source) {
   ldir <- strsplit(ldir, "\n")[[1]]
 
   for (lfile in ldir) {
-    centShp <- processFile(lfile, source, dname)
-    saveOutput(centShp, lfile, source)
+    bname <- substr(lfile, 1, nchar(lfile) - 4)
+    oname <- sprintf("%s/%s.csv.bz2", source, bname)
+    if (!file.exists(oname)) {
+      centShp <- processFile(lfile, source, dname)
+      saveOutput(centShp, lfile, oname)
+    }
   }
 
 }
 
-processSource("TABBLOCK")  # block
-processSource("BG")        # block group
-processSource("TRACT")     # tract
-processSource("COUNTY")    # county
-processSource("STATE")     # state
-processSource("ZCTA5")     # zip code "tabulation areas", 5-digits
+#processSource("TABBLOCK")  # block
+#processSource("BG")        # block group
+#processSource("TRACT")     # tract
+#processSource("COUNTY")    # county
+#processSource("STATE")     # state
+#processSource("ZCTA5")     # zip code "tabulation areas", 5-digits
 
 processSource("CSA")  # block
 processSource("CBSA")  # block
